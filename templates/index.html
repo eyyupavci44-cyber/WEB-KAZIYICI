@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gelişmiş Web Kazıyıcı (V1.0)</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; }
+        .container { padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="text"], input[type="number"], textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button, .btn { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block;}
+        button:hover, .btn:hover { background-color: #0056b3; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .link-history { display: block; margin-top: 10px; }
+        .checkbox-group { display: flex; align-items: center; margin-bottom: 15px; }
+        .checkbox-group input { width: auto; margin-right: 10px; }
+        /* İlerleme Göstergesi Stili */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; /* Başlangıçta gizli */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #007bff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loader-text {
+            color: white;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="loader-overlay" class="loader-overlay">
+        <div style="text-align: center;">
+            <div class="loader"></div>
+            <div class="loader-text">Kazıma işlemi devam ediyor... Lütfen bekleyin.</div>
+            <div class="loader-text" style="font-size: 0.9em; margin-top: 10px;">(Etik gecikme ve Dinamik Mod, süreyi artırabilir.)</div>
+        </div>
+    </div>
+    
+    <h1>Web Kazıma Servisi (WEB KAZIYICI)</h1>
+    <a href="{{ url_for('history') }}" class="link-history">» Kazıma Geçmişini Gör</a>
+    <div class="container">
+        
+        {% if error_message %}
+            <div class="alert-error">{{ error_message }}</div>
+        {% endif %}
+
+        <form method="POST" action="/">
+            <div class="form-group">
+                <label for="url">Kazınacak URL'ler (Her URL'yi Yeni Satıra Yazın):</label>
+                <textarea id="url" name="url" rows="5" placeholder="https://example.com/sayfa1&#10;https://example.com/sayfa2" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="selectors">CSS Seçiciler (Virgülle Ayırın. Örn: .urun_fiyati, .urun_adi):</label>
+                <textarea id="selectors" name="selectors" rows="3" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="delay">Etik Gecikme (Saniye):</label>
+                <input type="number" id="delay" name="delay" value="3" min="1" required>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="dynamic_mode" name="dynamic_mode" />
+                <label for="dynamic_mode" style="margin-bottom: 0;">Dinamik İçerik (JavaScript) Modu Kullan (Selenium)</label>
+            </div>
+            
+            <button type="submit">Veriyi Kazı</button>
+        </form>
+    </div>
+
+    <hr>
+    
+    {% if results %}
+        <h2>Kazıma Sonuçları (Toplam {{ results|length }} Veri)</h2>
+        
+        <div style="margin-bottom: 15px;">
+            <a href="{{ url_for('download_data', format='csv') }}" class="btn">CSV İndir</a>
+            <a href="{{ url_for('download_data', format='json') }}" class="btn">JSON İndir</a>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>CSS Seçici</th>
+                    <th>Çekilen Veri (Metin)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in results %}
+                    <tr>
+                        <td><code>{{ item.selector }}</code></td>
+                        <td>{{ item.data }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <script>
+        // Form gönderildiğinde yükleniyor ekranını göster
+        document.querySelector('form').onsubmit = function() {
+             document.getElementById('loader-overlay').style.display = 'flex';
+        }
+        
+        // Eğer sayfa yüklendiyse (yani sonuç dönmüşse), loader'ı gizle
+        window.onload = function() {
+            document.getElementById('loader-overlay').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
